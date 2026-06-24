@@ -92,6 +92,11 @@
     .hero-avatar .inner {
       width: 100%; height: 100%;
       border-radius: 50%;
+      overflow: hidden;
+    }
+    .hero-avatar .inner img {
+      width: 100%; height: 100%;
+      object-fit: cover;
       background: #12121c;
       display: flex;
       align-items: center;
@@ -234,6 +239,10 @@
     @keyframes pulse-live {
       0%, 100% { box-shadow: 0 0 0 0 #4caf5088; }
       50% { box-shadow: 0 0 0 10px #4caf5000; }
+    }
+    .live-dot.offline {
+      background: #555;
+      animation: none;
     }
     .live-label {
       font-size: 16px;
@@ -387,7 +396,7 @@
       position: relative;
     }
     .group-qr::after {
-      content: '';
+      content: '扫码加群';
       position: absolute;
       bottom: -22px;
       left: 50%;
@@ -395,6 +404,12 @@
       font-size: 11px;
       color: #8e8ea0;
       white-space: nowrap;
+    }
+    .group-qr img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
     }
     .group-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .group-btn {
@@ -457,7 +472,7 @@
       <i class="fas fa-gamepad"></i> 游戏主播 / 内容创作者
     </div>
     <div class="hero-avatar">
-      <div class="inner"><i class="fas fa-user"></i></div>
+      <div class="inner"><img src="./avatar.jpg" alt="头像"></div>
     </div>
     <h1>白斩堂</h1>
     <p class="subtitle">在另一个世界，打出属于我们的高光时刻。</p>
@@ -481,7 +496,7 @@
 
     <section class="section reveal">
       <div class="section-header">
-        <i class="fas fa-user"></i>
+        <img src="./avatar.jpg" alt="头像">
         <span>关于我</span>
       </div>
         <div class="about-text">
@@ -507,8 +522,8 @@
         <div class="live-status">
           <span class="live-dot"></span>
           <div>
-            <div class="live-label">直播中</div>
-            <div class="live-schedule">每晚 20:00 – 24:00 在线</div>
+            <div class="live-label">检测中...</div>
+            <div class="live-schedule">随缘直播</div>
           </div>
         </div>
         <div class="live-platforms">
@@ -593,10 +608,10 @@
       <div class="group-card">
         <div class="group-info">
           <h3>🚀 开黑交流群</h3>
-          <p>群号：123456789  · 目前 238 人在线  · 一起上分！</p>
+          <p>群号：55035338  · 目前 238 人在线  · 一起上分！</p>
         </div>
         <div class="group-qr">
-          <i class="fas fa-qrcode"></i>
+          <img src="./qrcode.jpg" alt="QQ群二维码">
         </div>
         <div class="group-actions">
           <a class="group-btn primary" href="#" target="_blank" rel="noopener">
@@ -631,6 +646,44 @@
         });
       }, { threshold: 0.15 });
       document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    (async function checkLive() {
+      const dot = document.querySelector('.live-dot');
+      const label = document.querySelector('.live-label');
+      const roomLink = document.querySelector('.live-btn');
+      const uid = 439108926;
+
+      async function fetchStatus() {
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(function(){ctrl.abort()}, 8000);
+          var api = 'https://api.live.bilibili.com/room/v1/Room/getRoomInfoOld?mid=' + uid;
+          var proxy = 'https://api.allorigins.win/raw?url=';
+          var resp = await fetch(proxy + encodeURIComponent(api), { signal: ctrl.signal });
+          clearTimeout(t);
+          var json = await resp.json();
+          if (json && json.data) {
+            if (json.data.live_status === 1) {
+              dot.classList.remove('offline');
+              label.textContent = '\u76f4\u64ad\u4e2d';
+            } else {
+              dot.classList.add('offline');
+              label.textContent = '\u672a\u5f00\u64ad';
+            }
+            if (json.data.room_id) {
+              roomLink.href = 'https://live.bilibili.com/' + json.data.room_id;
+            }
+          }
+        } catch(e) {
+          dot.classList.add('offline');
+          label.textContent = '\u672a\u5f00\u64ad';
+        }
+      }
+
+      await fetchStatus();
+      setInterval(fetchStatus, 60000);
+    })();
+
     })();
   </script>
 </body>
